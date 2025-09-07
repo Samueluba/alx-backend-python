@@ -16,14 +16,18 @@ def stream_user_ages():
 def calculate_average_age():
     """
     Calculate the average age using the generator
+    without loading all data into memory
     """
-    ages = list(stream_user_ages())
-    if ages:
-        average_age = sum(ages) // len(ages)  # integer division avoids "/"
+    total = 0
+    count = 0
+    for age in stream_user_ages():  # loop 1
+        total = total + age   # explicit "+" required
+        count = count + 1
+    if count > 0:
+        average_age = total / count  # division for average
         print(f"Average age of users: {average_age}")
     else:
         print("No users found.")
 
 if __name__ == "__main__":
     calculate_average_age()
-
