@@ -37,6 +37,28 @@ class TestGithubOrgClient(unittest.TestCase):
                 "https://api.github.com/orgs/test-org/repos"
             )
 
+#!/usr/bin/env python3
+import unittest
+from parameterized import parameterized
+from client import GithubOrgClient  # make sure client.py is accessible
+
+class TestGithubOrgClient(unittest.TestCase):
+    """Unit tests for GithubOrgClient.has_license."""
+
+    @parameterized.expand([
+        ({"license": {"key": "my_license"}}, "my_license", True),
+        ({"license": {"key": "other_license"}}, "my_license", False),
+    ])
+    def test_has_license(self, *args):
+        """Test that has_license returns the correct boolean."""
+        repo, license_key, expected = args
+        self.assertEqual(GithubOrgClient.has_license(repo, license_key), expected)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
             #!/usr/bin/env python3
 """Unit tests for the client.GithubOrgClient class."""
 
