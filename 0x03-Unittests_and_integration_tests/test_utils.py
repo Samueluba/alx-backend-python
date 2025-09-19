@@ -36,6 +36,21 @@ class TestMemoize(unittest.TestCase):
                 """Return the value of a_method, memoized."""
                 return self.a_method()
 
+        # Patch a_method so we can count how many times it is invoked
+        with patch.object(TestClass, "a_method",
+                          return_value=42) as mock_method:
+            obj = TestClass()
+            first = obj.a_property    # First call triggers a_method
+            second = obj.a_property   # Second call uses cached value
+            self.assertEqual(first, 42)
+            self.assertEqual(second, 42)
+            mock_method.assert_called_once()
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
         
         # Patch a_method so we can count how many times it is invoked
         with patch.object(TestClass, "a_method",
