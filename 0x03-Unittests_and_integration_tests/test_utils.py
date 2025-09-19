@@ -181,6 +181,68 @@ class TestGetJson(unittest.TestCase):
 # ---------- Entry Point ----------
 if __name__ == "__main__":
     unittest.main()
+#!/usr/bin/env python3
+"""
+Self-contained memoization test module.
+
+It defines:
+    - A simple utils.memoize decorator
+    - A TestClass using the decorator
+    - A unittest TestMemoize test case verifying memoization
+"""
+import unittest
+from unittest.mock import patch
+
+
+# ---------- Implementation (utils) ----------
+def memoize(method):
+    """
+    Decorator that caches the result of a method
+    the first time it is called on an instance.
+    """
+    attr_name = "_memo_" + method.__name__
+
+    def wrapper(self):
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, method(self))
+        return getattr(self, attr_name)
+
+    return property(wrapper)
+
+
+# ---------- Class Under Test ----------
+class TestClass:
+    def a_method(self):
+        return 42
+
+    @memoize
+    def a_property(self):
+        return self.a_method()
+
+
+# ---------- Tests ----------
+class TestMemoize(unittest.TestCase):
+    """Tests for the utils.memoize decorator."""
+
+    def test_memoize(self):
+        """
+        Verify that calling a_property twice only calls a_method once
+        and returns the correct cached result.
+        """
+        with patch.object(TestClass, "a_method", return_value=42) as mock_method:
+            obj = TestClass()
+
+            first_call = obj.a_property
+            second_call = obj.a_property
+
+            self.assertEqual(first_call, 42)
+            self.assertEqual(second_call, 42)
+            mock_method.assert_called_once()
+
+
+# ---------- Entry Point ----------
+if __name__ == "__main__":
+    unittest.main()
 
 
 
