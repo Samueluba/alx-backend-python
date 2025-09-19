@@ -36,6 +36,51 @@ class TestAccessNestedMap(unittest.TestCase):
         self.assertEqual(str(context.exception), repr(expected_key))
 
 #!/usr/bin/env python3
+
+#!/usr/bin/env python3
+"""
+Unit tests for utils.get_json.
+"""
+import unittest
+from unittest.mock import patch, Mock
+from utils import get_json
+
+
+class TestGetJson(unittest.TestCase):
+    """Tests for utils.get_json."""
+
+    @patch("utils.requests.get")
+    def test_get_json_example(self, mock_get):
+        """Test get_json with http://example.com."""
+        test_url = "http://example.com"
+        test_payload = {"payload": True}
+
+        mock_response = Mock()
+        mock_response.json.return_value = test_payload
+        mock_get.return_value = mock_response
+
+        result = get_json(test_url)
+        self.assertEqual(result, test_payload)
+        mock_get.assert_called_once_with(test_url)
+
+    @patch("utils.requests.get")
+    def test_get_json_holberton(self, mock_get):
+        """Test get_json with http://holberton.io."""
+        test_url = "http://holberton.io"
+        test_payload = {"payload": False}
+
+        mock_response = Mock()
+        mock_response.json.return_value = test_payload
+        mock_get.return_value = mock_response
+
+        result = get_json(test_url)
+        self.assertEqual(result, test_payload)
+        mock_get.assert_called_once_with(test_url)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
 """
 Unit tests for utils.get_json
 """
