@@ -1,39 +1,46 @@
 #!/usr/bin/env python3
+"""
+Unit test for the utils.memoize decorator.
+
+This test ensures that a memoized property only calls its underlying
+method once, even if accessed multiple times.
+"""
 import unittest
-from parameterized import parameterized
-from utils import access_nested_map
+from unittest.mock import patch
+from utils import memoize   # your existing utils.py must provide memoize
 
-class TestAccessNestedMap(unittest.TestCase):
-    @parameterized.expand([
-        ({"a": 1}, ("a",), 1),
-        ({"a": {"b": 2}}, ("a",), {"b": 2}),
-        ({"a": {"b": 2}}, ("a", "b"), 2),
-    ])
-    def test_access_nested_map(self, nested_map, path, expected):
-        self.assertEqual(access_nested_map(nested_map, path), expected)
 
-#!/usr/bin/env python3
-import unittest
-from parameterized import parameterized
-from utils import access_nested_map
+class TestMemoize(unittest.TestCase):
+    """Tests for the utils.memoize decorator."""
 
-class TestAccessNestedMap(unittest.TestCase):
-    @parameterized.expand([
-        ({"a": 1}, ("a",), 1),
-        ({"a": {"b": 2}}, ("a",), {"b": 2}),
-        ({"a": {"b": 2}}, ("a", "b"), 2),
-    ])
-    def test_access_nested_map(self, nested_map, path, expected):
-        self.assertEqual(access_nested_map(nested_map, path), expected)
+    def test_memoize(self):
+        """
+        Verify that when calling a_property twice, the correct result is
+        returned and a_method is only called once.
+        """
 
-    @parameterized.expand([
-        ({}, ("a",), 'a'),
-        ({"a": 1}, ("a", "b"), 'b'),
-    ])
-    def test_access_nested_map_exception(self, nested_map, path, expected_key):
-        with self.assertRaises(KeyError) as context:
-            access_nested_map(nested_map, path)
-        self.assertEqual(str(context.exception), repr(expected_key))
+        class TestClass:
+            def a_method(self):
+                return 42
+
+            @memoize
+            def a_property(self):
+                return self.a_method()
+
+        # Patch a_method so we can count how many times it is invoked
+        with patch.object(TestClass, "a_method", return_value=42) as mock_method:
+            obj = TestClass()
+
+            first = obj.a_property    # First call should trigger a_method
+            second = obj.a_property   # Second call should use cached value
+
+            self.assertEqual(first, 42)
+            self.assertEqual(second, 42)
+            mock_method.assert_called_once()
+
+
+if __name__ == "__main__":
+    unittest.main()
 
 #!/usr/bin/env python3
 
