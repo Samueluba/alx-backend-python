@@ -240,3 +240,99 @@ if __name__ == "__main__":
     import unittest
     unittest.main()
 
+#!/usr/bin/env python3
+"""
+Unit tests for the client.GithubOrgClient class.
+"""
+
+from unittest import TestCase
+from unittest.mock import patch, PropertyMock
+from parameterized import parameterized
+
+from client import GithubOrgClient
+
+
+class TestGithubOrgClient(TestCase):
+    """
+    Test cases for GithubOrgClient methods and properties.
+    """
+
+    @parameterized.expand([
+        ("google",),
+        ("abc",),
+    ])
+    @patch("client.get_json")
+    def test_org(self, org_name, mock_get_json):
+        """
+        Test that GithubOrgClient.org returns the payload from get_json
+        and that get_json is called once with the expected GitHub URL.
+        """
+        expected_payload = {"org": org_name}
+        mock_get_json.return_value = expected_payload
+
+        client = GithubOrgClient(org_name)
+        result = client.org
+
+        self.assertEqual(result, expected_payload)
+        mock_get_json.assert_called_once_with(
+            f"https://api.github.com/orgs/{org_name}"
+        )
+
+    def test_public_repos_url(self):
+        """
+        Test that GithubOrgClient._public_repos_url returns the correct
+        URL based on the mocked org property.
+        """
+        mock_payload = {
+            "repos_url": "https://api.github.com/orgs/testorg/repos"
+        }
+        with patch(
+            "client.GithubOrgClient.org",
+            new_callable=PropertyMock,
+            return_value=mock_payload
+        ):
+            client = GithubOrgClient("testorg")
+            self.assertEqual(
+                client._public_repos_url,
+                "https://api.github.com/orgs/testorg/repos"
+            )
+
+    @patch("client.get_json")
+    def test_public_repos(self, mock_get_json):
+        """
+        Test that GithubOrgClient.public_repos returns the expected list
+        of repository names and that both get_json and the internal
+        _public_repos_url property are called once.
+        """
+        # Fake payload returned by get_json
+        fake_payload = [
+            {"name": "repo1"},
+            {"name": "repo2"},
+            {"name": "repo3"},
+        ]
+        mock_get_json.return_value = fake_payload
+
+        # Fake URL returned by _public_repos_url
+        fake_url = "https://api.github.com/orgs/testorg/repos"
+
+        with patch(
+            "client.GithubOrgClient._public_repos_url",
+            new_callable=PropertyMock,
+            return_value=fake_url
+        ) as mock_url:
+            client = GithubOrgClient("testorg")
+            result = client.public_repos()
+
+            expected_names = ["repo1", "repo2", "repo3"]
+            self.assertEqual(result, expected_names)
+
+            # Verify calls
+            mock_url.assert_called_once()
+            mock_get_json.assert_called_once_with(fake_url)
+
+
+if __name__ == "__main__":
+    import unittest
+    unittest.main()
+
+
