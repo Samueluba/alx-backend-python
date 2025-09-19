@@ -36,3 +36,4 @@ class TestAccessNestedMap(unittest.TestCase):
         self.assertEqual(str(context.exception), repr(path[len(context.exception.args[0]) - 1]))
 
 
+
