@@ -119,6 +119,69 @@ class TestGetJson(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+#!/usr/bin/env python3
+"""
+Self-contained module that defines utils.get_json
+and tests it using unittest and unittest.mock.
+Running this file executes the tests directly.
+"""
+
+import unittest
+from unittest.mock import patch, Mock
+import requests
+
+
+# ---------- Implementation ----------
+def get_json(url: str):
+    """
+    Fetch JSON data from a URL and return it.
+
+    Args:
+        url (str): Target URL.
+
+    Returns:
+        dict: JSON payload.
+    """
+    return requests.get(url).json()
+
+
+# ---------- Tests ----------
+class TestGetJson(unittest.TestCase):
+    """Unit tests for the get_json function."""
+
+    @patch("requests.get")
+    def test_get_json_example(self, mock_get):
+        """Test get_json with http://example.com."""
+        test_url = "http://example.com"
+        test_payload = {"payload": True}
+
+        mock_response = Mock()
+        mock_response.json.return_value = test_payload
+        mock_get.return_value = mock_response
+
+        result = get_json(test_url)
+        self.assertEqual(result, test_payload)
+        mock_get.assert_called_once_with(test_url)
+
+    @patch("requests.get")
+    def test_get_json_holberton(self, mock_get):
+        """Test get_json with http://holberton.io."""
+        test_url = "http://holberton.io"
+        test_payload = {"payload": False}
+
+        mock_response = Mock()
+        mock_response.json.return_value = test_payload
+        mock_get.return_value = mock_response
+
+        result = get_json(test_url)
+        self.assertEqual(result, test_payload)
+        mock_get.assert_called_once_with(test_url)
+
+
+# ---------- Entry Point ----------
+if __name__ == "__main__":
+    unittest.main()
+
 
 
 
