@@ -405,4 +405,74 @@ if __name__ == "__main__":
     import unittest
     unittest.main()
 
+#!/usr/bin/env python3
+"""Unit tests for the client.GithubOrgClient class."""
+
+import unittest
+from unittest.mock import patch, PropertyMock
+from client import GithubOrgClient
+
+
+class TestGithubOrgClient(unittest.TestCase):
+    """Test cases for GithubOrgClient methods and properties."""
+
+    def _check_org(self, org_name):
+        """Helper to test GithubOrgClient.org with a given org."""
+        expected = {"org": org_name}
+        with patch("client.get_json", return_value=expected) as mock_get:
+            client = GithubOrgClient(org_name)
+            self.assertEqual(client.org, expected)
+            mock_get.assert_called_once_with(
+                f"https://api.github.com/orgs/{org_name}"
+            )
+
+    def test_org_google(self):
+        """Test .org for 'google'."""
+        self._check_org("google")
+
+    def test_org_abc(self):
+        """Test .org for 'abc'."""
+        self._check_org("abc")
+
+    def test_public_repos_url(self):
+        """Test _public_repos_url returns expected URL."""
+        payload = {"repos_url": "https://api.github.com/orgs/testorg/repos"}
+        with patch(
+            "client.GithubOrgClient.org",
+            new_callable=PropertyMock,
+            return_value=payload,
+        ):
+            client = GithubOrgClient("testorg")
+            self.assertEqual(
+                client._public_repos_url,
+                "https://api.github.com/orgs/testorg/repos",
+            )
+
+    def test_public_repos(self):
+        """Test public_repos returns the correct repo list."""
+        fake_payload = [
+            {"name": "repo1"},
+            {"name": "repo2"},
+            {"name": "repo3"},
+        ]
+        fake_url = "https://api.github.com/orgs/testorg/repos"
+        with patch("client.get_json", return_value=fake_payload) as mock_json:
+            with patch(
+                "client.GithubOrgClient._public_repos_url",
+                new_callable=PropertyMock,
+                return_value=fake_url,
+            ) as mock_url:
+                client = GithubOrgClient("testorg")
+                self.assertEqual(
+                    client.public_repos(),
+                    ["repo1", "repo2", "repo3"],
+                )
+                mock_url.assert_called_once()
+                mock_json.assert_called_once_with(fake_url)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
 
