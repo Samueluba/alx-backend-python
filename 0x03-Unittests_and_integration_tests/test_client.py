@@ -540,6 +540,58 @@ class TestGithubOrgClient(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+#!/usr/bin/env python3
+import unittest
+from unittest.mock import patch
+from client import GithubOrgClient
+from fixtures import public_repos  # your fixture providing expected repos
+
+
+class TestGithubOrgClient(unittest.TestCase):
+    """Unit tests for GithubOrgClient."""
+
+    @patch("client.get_json")
+    def test_public_repos(self, mock_get_json):
+        """
+        Test that GithubOrgClient.public_repos returns the expected
+        list of repo names from the fixture.
+        """
+        # Arrange
+        mock_get_json.return_value = public_repos  # fixture list of repo dicts
+        client = GithubOrgClient("google")
+
+        # Act
+        result = client.public_repos()
+
+        # Assert
+        expected_names = [repo["name"] for repo in public_repos]
+        self.assertEqual(result, expected_names)
+        mock_get_json.assert_called_once_with(client._public_repos_url)
+
+    @patch("client.get_json")
+    def test_public_repos_with_license(self, mock_get_json):
+        """
+        Test that GithubOrgClient.public_repos returns only repos
+        that have the specified license.
+        """
+        mock_get_json.return_value = public_repos
+        client = GithubOrgClient("google")
+
+        # Act
+        result = client.public_repos(license="apache-2.0")
+
+        # Assert
+        expected_names = [
+            repo["name"]
+            for repo in public_repos
+            if repo.get("license", {}).get("key") == "apache-2.0"
+        ]
+        self.assertEqual(result, expected_names)
+        mock_get_json.assert_called_once_with(client._public_repos_url)
+
+
+if __name__ == "__main__":
+    unittest.main()
 
 
 
