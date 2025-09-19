@@ -613,7 +613,54 @@ class TestGithubOrgClient(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+#!/usr/bin/env python3
+"""Unit tests for GithubOrgClient.public_repos"""
+
+import unittest
+from unittest.mock import patch, PropertyMock
+from client import GithubOrgClient
+from fixtures import (
+    org_payload,
+    repos_payload,
+    expected_repos,
+    apache2_repos,
+)
 
 
+class TestGithubOrgClient(unittest.TestCase):
+    """Test cases for GithubOrgClient"""
+
+    @patch("client.get_json")
+    def test_public_repos(self, mock_get_json):
+        """Ensure public_repos returns all expected repo names"""
+        mock_get_json.return_value = repos_payload
+        with patch(
+            "client.GithubOrgClient.org",
+            new_callable=PropertyMock,
+            return_value=org_payload,
+        ):
+            client = GithubOrgClient("google")
+            self.assertEqual(client.public_repos(), expected_repos)
+        mock_get_json.assert_called_once_with(org_payload["repos_url"])
+
+    @patch("client.get_json")
+    def test_public_repos_with_license(self, mock_get_json):
+        """
+        Ensure public_repos returns only Apache-2.0 repos
+        when license='apache-2.0' is specified
+        """
+        mock_get_json.return_value = repos_payload
+        with patch(
+            "client.GithubOrgClient.org",
+            new_callable=PropertyMock,
+            return_value=org_payload,
+        ):
+            client = GithubOrgClient("google")
+            self.assertEqual(
+                client.public_repos(license="apache-2.0"),
+                apache2_repos,
+            )
 
 
+if __name__ == "__main__":
+    unittest.main()
