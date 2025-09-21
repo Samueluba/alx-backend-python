@@ -46,3 +46,18 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating Messages.
     Supports filtering messages
+
+    from django.urls import path, include
+from rest_framework import routers
+from .views import ConversationViewSet, MessageViewSet
+
+# ✅ Create a DRF DefaultRouter instance
+router = routers.DefaultRouter()
+router.register(r'conversations', ConversationViewSet, basename='conversation')
+router.register(r'messages', MessageViewSet, basename='message')
+
+urlpatterns = [
+    # ✅ Include all automatically generated routes
+    path('', include(router.urls)),
+]
+
