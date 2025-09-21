@@ -1,63 +1,72 @@
 from django.contrib.auth.models import User
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.response import Response
-from rest_framework.decorators import action
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for listing, retrieving, and creating Conversations.
-    Includes search & filter capabilities.
+    List, retrieve and create conversations.
+    Supports search by conversation name or participant username.
     """
     queryset = Conversation.objects.all().prefetch_related("participants", "messages")
     serializer_class = ConversationSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
-    search_fields = ["name", "participants__username"]  # search by conversation name or participant username
+    search_fields = ["name", "participants__username"]
 
     def perform_create(self, serializer):
-        """
-        Create a new conversation and automatically add
-        the current user as a participant.
-        """
         conversation = serializer.save()
+        # add creator automatically
         conversation.participants.add(self.request.user)
 
-        # Optionally add other participants
+        # optionally add more participants
         participant_ids = self.request.data.get("participants", [])
         if isinstance(participant_ids, list):
             users = User.objects.filter(id__in=participant_ids)
             conversation.participants.add(*users)
 
-    @action(detail=True, methods=["get"])
-    def participants(self, request, pk=None):
-        """Custom endpoint to list participants of a conversation."""
-        conversation = self.get_object()
-        users = conversation.participants.all()
-        return Response(
-            {"participants": [u.username for u in users]},
-            status=status.HTTP_200_OK
-        )
-
 
 class MessageViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for listing and creating Messages.
-    Supports filtering messages
+    List and send messages.
+    Filter by conversation using ?conversation=<id>.
+    """
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["timestamp"]
+    ordering = ["timestamp"]
 
-    from django.urls import path, include
-from rest_framework import routers
-from .views import ConversationViewSet, MessageViewSet
+    def get_queryset(self):
+        queryset = Message.objects.select_related("sender", "conversation")
+        conversation_id = self.request.query_params.get("conversation")
+        if conversation_id:
+            queryset = queryset.filter(conversation_id=conversation_id)
+        return queryset
 
-# ✅ Create a DRF DefaultRouter instance
-router = routers.DefaultRouter()
-router.register(r'conversations', ConversationViewSet, basename='conversation')
-router.register(r'messages', MessageViewSet, basename='message')
+    def create(self, request, *args, **kwargs):
+        conversation_id = request.data.get("conversation")
+        content = request.data.get("content")
 
-urlpatterns = [
-    # ✅ Include all automatically generated routes
-    path('', include(router.urls)),
-]
+        if not conversation_id or not content:
+            return Response(
+                {"detail": "Both 'conversation' and 'content' are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        try:
+            conversation = Conversation.objects.get(pk=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response(
+                {"detail": "Conversation not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(
+            data={"conversation": conversation.id, "content": content}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(sender=request.user, conversation=conversation)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
