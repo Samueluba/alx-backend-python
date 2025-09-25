@@ -2,23 +2,22 @@ from rest_framework import permissions
 from rest_framework.permissions import BasePermission
 
 
-# chats/permissions.py
-
 from rest_framework import permissions
 from rest_framework.permissions import BasePermission
 
 class IsParticipant(BasePermission):
     """
-    Custom permission to allow only participants of a conversation or message.
+    Custom permission that allows only participants (sender/receiver or conversation members)
+    to access the object.
     """
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        # If object has a 'participants' field (ManyToMany)
+        # If the object has a 'participants' attribute (e.g., Conversation)
         if hasattr(obj, 'participants'):
             return user in obj.participants.all()
 
-        # If object has 'sender' and 'receiver' fields
+        # If it's a Message with sender/receiver
         if hasattr(obj, 'sender') and hasattr(obj, 'receiver'):
             return obj.sender == user or obj.receiver == user
 
