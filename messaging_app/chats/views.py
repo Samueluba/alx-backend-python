@@ -70,3 +70,35 @@ class MessageViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(sender=request.user, conversation=conversation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+# chats/views.py
+
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .models import Message
+from .serializers import MessageSerializer
+from .permissions import IsParticipantOfConversation
+
+class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]  # ✔️ Custom + auth
+
+    def get_queryset(self):
+        # ✔️ Restrict messages to conversations the user participates in
+        return Message.objects.filter(conversation__participants=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        message = self.get_object()
+
+        # ✔️ Explicit permission check and HTTP_403_FORBIDDEN
+        if request.user not in message.conversation.participants.all():
+            return Response(
+                {"detail": "You are not a participant in this conversation."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = self.get_serializer(message)
+        return Response(serializer.data)
+
