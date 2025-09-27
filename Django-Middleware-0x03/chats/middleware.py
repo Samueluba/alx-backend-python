@@ -65,3 +65,28 @@ class OffensiveLanguageMiddleware:
             return x_forwarded_for.split(',')[0].strip()
         return request.META.get('REMOTE_ADDR')
 
+# Django-Middleware-0x03/chats/middleware.py
+
+from django.http import HttpResponseForbidden
+
+class RolepermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = getattr(request, 'user', None)
+
+        # Check if user is authenticated and has a 'role' attribute
+        if not user or not user.is_authenticated:
+            return HttpResponseForbidden("Access denied: User is not authenticated.")
+
+        # Assuming the user has a 'role' field on their model
+        user_role = getattr(user, 'role', None)
+
+        if user_role not in ['admin', 'moderator']:
+            return HttpResponseForbidden("Access denied: Insufficient role permissions.")
+
+        return self.get_response(request)
+
+
+
