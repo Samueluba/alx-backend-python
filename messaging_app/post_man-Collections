@@ -1,1 +1,106 @@
 post_man-Collections
+
+{
+  "info": {
+    "name": "Chat API - ALX Project",
+    "_postman_id": "a1b2c3d4-5678-9101-1121-314151617181",
+    "description": "Test creating conversations, sending messages, and JWT-based authentication for ALX Django Middleware Project",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login - Get JWT Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/token/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "token"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"user1\",\n  \"password\": \"password123\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Conversation",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/conversations/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "conversations"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"participants\": [2]\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Send Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/messages/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "messages"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"conversation\": 1,\n  \"message\": \"Hello! This is a test message.\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fetch Messages",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/messages/?conversation=1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "messages"],
+          "query": [{ "key": "conversation", "value": "1" }]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Unauthorized Access (Expect 403/401)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/messages/?conversation=1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "messages"],
+          "query": [{ "key": "conversation", "value": "1" }]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "access_token", "value": "" }
+  ]
+}
+
