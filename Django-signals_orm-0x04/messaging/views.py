@@ -1,4 +1,17 @@
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import Message
+
+@login_required
+def inbox(request):
+    user = request.user
+    # Get unread messages optimized with .only() for necessary fields (id, sender, content)
+    unread_messages = Message.unread.unread_for_user(user).only('id', 'sender', 'content', 'timestamp')
+
+    return render(request, 'messaging/inbox.html', {'unread_messages': unread_messages})
+
+
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.contrib.auth.models import User
 
