@@ -1,3 +1,5 @@
+read = models.BooleanField(default=False)
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -64,5 +66,12 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender} ➜ {self.receiver} | {self.content[:30]}"
+
+from .managers import UnreadMessagesManager  # ✅ import the custom manager
+
+# Managers
+objects = models.Manager()  # Default
+unread = UnreadMessagesManager()  # ✅ Must be named `unread`
+
 
 
