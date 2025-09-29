@@ -50,3 +50,23 @@ def threaded_conversation_view(request, message_id):
     })
 
 
+from django.shortcuts import render
+from .models import Message
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def user_sent_messages_view(request):
+    """
+    ✅ Fetch messages sent by the logged-in user,
+    optimized with select_related and prefetch_related.
+    """
+    messages = Message.objects.filter(sender=request.user) \
+        .select_related('receiver', 'parent_message') \
+        .prefetch_related('replies__sender', 'replies__receiver') \
+        .order_by('-timestamp')
+
+    return render(request, 'messaging/user_sent_messages.html', {
+        'messages': messages
+    })
+
+
