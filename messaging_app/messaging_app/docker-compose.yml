@@ -15,3 +15,38 @@ services:
 volumes:
   mysql-data:  # Named volume for MySQL data persistence
 
+version: '3.8'
+
+services:
+  web:
+    image: python:3.9-slim
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    working_dir: /code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DEBUG=1
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_PORT=3306
+      - DJANGO_DB_NAME=${MYSQL_DB}
+      - DJANGO_DB_USER=${MYSQL_USER}
+      - DJANGO_DB_PASSWORD=${MYSQL_PASSWORD}
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
