@@ -1,1 +1,21 @@
+# Use a base Python image with version 3.10
+FROM python:3.10-slim
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the requirements.txt file into the container
+COPY requirements.txt /app/
+
+# Install dependencies from requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire project code into the container
+COPY . /app/
+
+# Expose port 8000 (default port for Django)
+EXPOSE 8000
+
+# Command to run the Django app
+CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
 
