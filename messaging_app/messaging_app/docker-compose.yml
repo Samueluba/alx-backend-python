@@ -1,1 +1,17 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: example_password
+      MYSQL_DATABASE: example_db
+      MYSQL_USER: example_user
+      MYSQL_PASSWORD: example_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql  # This is where we mount the volume
+    
+volumes:
+  mysql-data:  # Named volume for MySQL data persistence
 
