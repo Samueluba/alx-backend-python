@@ -1,1 +1,36 @@
+version: '3.8'
+
+services:
+  web:
+    image: python:3.9-slim
+    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    working_dir: /code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DEBUG=1
+      - DJANGO_DB_HOST=db  # Host name for the db container
+      - DJANGO_DB_PORT=3306
+      - DJANGO_DB_NAME=${MYSQL_DB}  # Database name from .env
+      - DJANGO_DB_USER=${MYSQL_USER}  # User from .env
+      - DJANGO_DB_PASSWORD=${MYSQL_PASSWORD}  # Password from .env
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}  # Set root password from .env
+      MYSQL_USER: ${MYSQL_USER}  # MySQL username from .env
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}  # MySQL password from .env
+      MYSQL_DATABASE: ${MYSQL_DB}  # MySQL database name from .env
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
 
