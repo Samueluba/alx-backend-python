@@ -1,1 +1,47 @@
+#!/bin/bash
+
+# kubctl-0x01 - Scale, verify, load-test, and monitor a Django app in Kubernetes
+
+set -e  # Exit on error
+
+DEPLOYMENT_NAME="messaging-app-deployment"
+NAMESPACE="default"
+
+echo "🔧 Scaling deployment '$DEPLOYMENT_NAME' to 3 replicas..."
+kubectl scale deployment "$DEPLOYMENT_NAME" --replicas=3 --namespace="$NAMESPACE"
+
+echo "⏳ Waiting for pods to be ready..."
+sleep 5  # short wait for pods to spin up
+
+echo "🔍 Verifying running pods..."
+kubectl get pods --namespace="$NAMESPACE" -l app=messaging-app
+
+echo "✅ Deployment scaled successfully."
+
+# Get ClusterIP Service URL (internal access)
+echo "🌐 Getting service details..."
+SERVICE_NAME="messaging-app-service"
+PORT=$(kubectl get svc "$SERVICE_NAME" --namespace="$NAMESPACE" -o=jsonpath='{.spec.ports[0].port}')
+CLUSTER_IP=$(kubectl get svc "$SERVICE_NAME" --namespace="$NAMESPACE" -o=jsonpath='{.spec.clusterIP}')
+
+if [[ -z "$CLUSTER_IP" || -z "$PORT" ]]; then
+    echo "❌ Could not get service IP or port."
+    exit 1
+fi
+
+TARGET_URL="http://$CLUSTER_IP:$PORT"
+
+echo "🧪 Performing load testing using wrk (5 seconds, 10 connections, 2 threads)..."
+if ! command -v wrk &> /dev/null; then
+    echo "❌ wrk is not installed. Install it to perform load testing:"
+    echo "👉 https://github.com/wg/wrk"
+    exit 1
+fi
+
+wrk -t2 -c10 -d5s "$TARGET_URL"
+
+echo "📊 Monitoring resource usage (CPU/Memory):"
+kubectl top pods --namespace="$NAMESPACE"
+
+echo "✅ Done."
 
