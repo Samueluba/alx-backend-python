@@ -1,1 +1,41 @@
+#!/bin/bash
+
+SCRIPT_PATH="messaging_app/kurbeScript"
+
+echo "🔍 Checking if $SCRIPT_PATH exists and is not empty..."
+if [[ ! -f "$SCRIPT_PATH" ]]; then
+    echo "❌ File $SCRIPT_PATH does not exist."
+    exit 1
+fi
+
+if [[ ! -s "$SCRIPT_PATH" ]]; then
+    echo "❌ File $SCRIPT_PATH is empty."
+    exit 1
+fi
+
+echo "✅ $SCRIPT_PATH exists and is not empty."
+
+# Check for Minikube installation check in script
+echo "🔍 Checking if script checks for Minikube installation..."
+if grep -q 'minikube' "$SCRIPT_PATH" && grep -q 'command -v' "$SCRIPT_PATH"; then
+    echo "✅ Script checks if Minikube is installed."
+else
+    echo "❌ Script does not check for Minikube installation."
+fi
+
+# Check for cluster verification command
+echo "🔍 Checking for 'kubectl cluster-info'..."
+if grep -q 'kubectl cluster-info' "$SCRIPT_PATH"; then
+    echo "✅ Script verifies that the cluster is running."
+else
+    echo "❌ Script does not verify the cluster with 'kubectl cluster-info'."
+fi
+
+# Check for command to retrieve available pods
+echo "🔍 Checking for 'kubectl get pods'..."
+if grep -q 'kubectl get pods' "$SCRIPT_PATH"; then
+    echo "✅ Script retrieves available pods."
+else
+    echo "❌ Script does not retrieve available pods."
+fi
 
