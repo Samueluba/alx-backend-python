@@ -1,1 +1,60 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define any environment variables
+        PYTHON_VENV = 'venv'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the GitHub repository
+                git credentialsId: 'github-credentials', url: 'https://github.com/your_username/alx-backend-python.git', branch: 'main'
+            }
+        }
+
+        stage('Set Up Python Environment') {
+            steps {
+                script {
+                    // Create and activate a Python virtual environment
+                    sh 'python3 -m venv $PYTHON_VENV'
+                    sh '. $PYTHON_VENV/bin/activate'
+                }
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    // Install the required dependencies
+                    sh '. $PYTHON_VENV/bin/activate && pip install -r messaging_app/requirements.txt'
+                }
+            }
+        }
+
+        stage('Run Tests with pytest') {
+            steps {
+                script {
+                    // Run tests using pytest and generate a test report
+                    sh '. $PYTHON_VENV/bin/activate && pytest --maxfail=1 --disable-warnings --cov=messaging_app --cov-report=xml'
+                }
+            }
+        }
+
+        stage('Archive Test Reports') {
+            steps {
+                // Archive the test reports for later viewing
+                junit '**/test-*.xml' // This assumes pytest is set to output reports in XML format
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up after the build (e.g., remove the virtual environment)
+            sh 'rm -rf $PYTHON_VENV'
+        }
+    }
+}
 
