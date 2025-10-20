@@ -67,3 +67,87 @@ jobs:
           name: test-results
           path: messaging_app/tests/test-results.xml  # Adjust this path based on where your test reports are saved
 
+          name: Django CI
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to 'main' branch (adjust if you're using another branch)
+  pull_request:
+    branches:
+      - main  # Trigger on pull request to 'main' branch (adjust if needed)
+
+jobs:
+  test:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu image for the CI environment
+
+    services:
+      mysql:
+        image: mysql:5.7  # Use MySQL 5.7 as the database service
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword  # Set the MySQL root password
+          MYSQL_DATABASE: test_db  # Name of the database to be created
+        ports:
+          - 3306:3306  # Expose the MySQL service on port 3306
+        options: >-
+          --health-cmd="mysqladmin ping --host 127.0.0.1 --password=rootpassword" 
+          --health-interval=5s 
+          --health-timeout=5s 
+          --health-retries=3
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'  # You can adjust the version as needed
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r messaging_app/requirements.txt  # Install dependencies from the requirements file
+          pip install flake8 pytest-cov coverage  # Install Flake8 and pytest coverage plugin
+
+      # Step 4: Set up MySQL database for testing
+      - name: Set up MySQL database
+        run: |
+          # Wait for MySQL to be ready
+          sleep 10  # Ensure MySQL service has enough time to start
+
+          # Create the Django database and apply migrations
+          python messaging_app/manage.py migrate  # Apply migrations
+
+      # Step 5: Run Flake8 for linting (Fail build if there are linting errors)
+      - name: Run Flake8
+        run: |
+          source venv/bin/activate
+          flake8 messaging_app --max-line-length=120  # Lint the Django project and fail on issues
+
+      # Step 6: Run tests with coverage
+      - name: Run tests with coverage
+        run: |
+          source venv/bin/activate  # Activate the virtual environment
+          pytest --maxfail=1 --disable-warnings -q --tb=short --cov=messaging_app --cov-report=xml  # Run tests with coverage report in XML format
+
+      # Step 7: Upload code coverage report
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: messaging_app/coverage.xml  # Upload the coverage report (you may change the path as needed)
+
+      # Step 8: Upload test results
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: messaging_app/tests/test-results.xml  # Adjust this path based on where your test reports are saved
+
+
