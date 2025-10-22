@@ -47,6 +47,52 @@ pipeline {
             // Clean up after build (optional)
             cleanWs()
         }
+
+        pipeline {
+    agent any
+
+    environment {
+        GIT_CREDENTIALS_ID = 'github-creds'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Make sure to specify branch explicitly
+                git credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com/yourusername/messaging_app.git', branch: 'main'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    python3 -m venv venv
+                    ./venv/bin/pip install --upgrade pip
+                    ./venv/bin/pip install -r messaging_app/requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh './venv/bin/pytest messaging_app/tests --junitxml=messaging_app/report.xml'
+            }
+        }
+
+        stage('Archive Test Report') {
+            steps {
+                junit 'messaging_app/report.xml'
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
+
     }
 }
 
